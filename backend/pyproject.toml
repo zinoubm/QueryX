@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "{{ cookiecutter.project_slug }}-backend"
+version = "0.1.0"
+description = ""
+authors = []
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.95.2"
+uvicorn = "^0.22.0"
+pydantic = "^1.10.7"
+requests = "^2.30.0"
+alembic = "^1.11.1"
+psycopg2-binary = "^2.9.6"
+asyncpg = "^0.27.0"
+SQLAlchemy = "^2.0.15"
+gunicorn = "^20.1.0"
+fastapi-users = {extras = ["sqlalchemy"], version = "^11.0.0"}
+qdrant-client = {version = "^1.0.4", python = "<3.12"}
+openai = "^0.27.7"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+pytest = "^7.3.1"
+ipython = "^8.13.2"
+pytest-cov = "^4.0.0"
+httpx = "^0.24.1"
+pytest-asyncio = "^0.21.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.cruft]
+skip = [".env"]
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'

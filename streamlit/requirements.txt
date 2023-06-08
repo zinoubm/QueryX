@@ -1,0 +1,7 @@
+streamlit
+streamlit-authenticator
+streamlit-chat
+streamlit-extras
+extra-streamlit-components
+hugchat
+requests
