@@ -1,4 +1,4 @@
-serivces:
+services:
 - type: web
   name: queryx
   runtime: docker
