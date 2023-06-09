@@ -4,8 +4,6 @@ services:
   runtime: docker
   dockerContext: ./backend
   healthCheckPath: /
-  domains:
-    - queryx.render.com
   envVars:
     - key: POSTGRES_DB
       value: app
