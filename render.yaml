@@ -4,7 +4,5 @@ services:
     runtime: python
     buildCommand: pip install --no-cache-dir --upgrade -r /streamlit/requirements.txt
     startCommand: streamlit run app.py --server.port=9000 --server.address=0.0.0.0
-    domains:
-      - queryx.render.com
-
-    autoDeploy: false
+    # domains:
+    #   - queryx.render.com
