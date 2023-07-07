@@ -1,77 +1,145 @@
-import qdrant_client
-import openai
 import os
+from qdrant_client import QdrantClient
+from qdrant_client.http import models
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
+# from dotenv import load_dotenv
+from uuid import uuid4
 
 
-class VectorClient:
-    def __init__(self):
-        self.client = qdrant_client.QdrantClient(
-            host=os.environ["QDRANT_DB_HOST"],
-            port=os.environ["QDRANT_DB_PORT"],
-            api_key=os.environ["QDRANT_API_KEY"],
-        )
+# load_dotenv()
 
-    def embed(self, prompt, model="text-similarity-ada-001"):
-        prompt = prompt.replace("\n", " ")
-        embedding = None
+COLLECTION_NAME = os.getenv("COLLECTION_NAME")
+COLLECTION_SIZE = os.getenv("COLLECTION_SIZE")
+QDRANT_PORT = os.getenv("QDRANT_PORT")
+QDRANT_HOST = os.getenv("QDRANT_HOST")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+
+
+class QdrantManager:
+    """
+    A class for managing collections in the Qdrant database.
+
+    Args:
+        collection_name (str): The name of the collection to manage.
+        collection_size (int): The maximum number of documents in the collection.
+        port (int): The port number for the Qdrant API.
+        host (str): The hostname or IP address for the Qdrant server.
+        api_key (str): The API key for authenticating with the Qdrant server.
+        recreate_collection (bool): Whether to recreate the collection if it already exists.
+
+    Attributes:
+        client (qdrant_client.QdrantClient): The Qdrant client object for interacting with the API.
+    """
+
+    def __init__(
+        self,
+        collection_name=COLLECTION_NAME,
+        collection_size: int = COLLECTION_SIZE,
+        port: int = QDRANT_PORT,
+        host=QDRANT_HOST,
+        api_key=QDRANT_API_KEY,
+        recreate_collection: bool = False,
+    ):
+        self.collection_name = collection_name
+        self.collection_size = collection_size
+        self.host = host
+        self.port = port
+        self.api_key = api_key
+
+        self.client = QdrantClient(host=host, port=port, api_key=api_key)
+        self.setup_collection(collection_size, recreate_collection)
+
+    def setup_collection(self, collection_size: int, recreate_collection: bool):
+        if recreate_collection:
+            self.recreate_collection()
+
         try:
-            embedding = openai.Embedding.create(input=[prompt], model=model)["data"][0][
-                "embedding"
-            ]
-        except Exception as err:
-            print(f"Sorry, There was a problem {err}")
+            collection_info = self.get_collection_info()
+            current_collection_size = collection_info["vector_size"]
 
-        return embedding
+            if current_collection_size != int(collection_size):
+                raise ValueError(
+                    f"""
+                    Existing collection {self.collection_name} has different collection size
+                    To use the new collection configuration, you need to recreate the collection as it already exists with a different configuration.
+                    use recreate_collection = True.
+                    """
+                )
 
-    def search(self, query_embedding):
-        query_results = self.client.search(
-            collection_name="upsto_test",
-            query_vector=query_embedding,
-            limit=50,
+        except Exception as e:
+            self.recreate_collection()
+            print(e)
+
+    def recreate_collection(self):
+        self.client.recreate_collection(
+            collection_name=self.collection_name,
+            vectors_config=models.VectorParams(
+                size=self.collection_size, distance=models.Distance.COSINE
+            ),
         )
-        return query_results
 
-    def chat_completrion(self, prompt):
-        completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
+    def get_collection_info(self):
+        collection_info = self.client.get_collection(
+            collection_name=self.collection_name
+        )
+
+        return {
+            "points_count": int(collection_info.points_count),
+            "vectors_count": int(collection_info.vectors_count),
+            "indexed_vectors_count": int(collection_info.indexed_vectors_count),
+            "vector_size": int(collection_info.config.params.vectors.size),
+        }
+
+    def upsert_point(self, id, payload, embedding):
+        response = self.client.upsert(
+            collection_name=self.collection_name,
+            points=[
+                models.PointStruct(
+                    id=id,
+                    payload=payload,
+                    vector=embedding,
+                ),
             ],
         )
 
-        return completion
+        return response
 
-    def answer(self, query):
-        query_embedding = self.embed(prompt=query)
-
-        query_results = self.client.search(
-            collection_name="twitter_tos",
-            query_vector=query_embedding,
-            limit=4,
+    def upsert_points(self, ids, payloads, embeddings):
+        response = self.client.upsert(
+            collection_name=self.collection_name,
+            points=models.Batch(
+                ids=ids,
+                payloads=payloads,
+                vectors=embeddings,
+            ),
         )
 
-        contexts = [query_result.payload["content"] for query_result in query_results]
+        return response
 
-        joined_context = "\n".join(contexts)
+    def search_point(self, query_vector, username, filename, limit):
+        response = self.client.search(
+            collection_name=self.collection_name,
+            query_filter=models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="user",
+                        match=models.MatchValue(
+                            value=username,
+                        ),
+                    ),
+                    models.FieldCondition(
+                        key="filename",
+                        match=models.MatchValue(value=filename),
+                    ),
+                ]
+            ),
+            query_vector=query_vector,
+            limit=limit,
+        )
 
-        prompt = f"""
-        
-        Question Prompt: Given the context below, answer the following question using only 
-        the provided information and without referring to prior knowledge:
+        return response
 
-        Context:
+    def delete_collection(self):
+        response = self.client.delete_collection(collection_name=self.collection_name)
 
-        "{joined_context}"
-
-        Question: {query}
-        
-        """
-
-        test = self.chat_completrion(prompt=prompt)
-
-        return test["choices"][0]["message"]["content"]
+        return response

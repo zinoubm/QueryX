@@ -72,10 +72,12 @@ def app():
         router.route("/login")
 
     with st.sidebar:
-        st.write("sidebar here")
+        st.write("My files")
         if st.button("Log out"):
             client.logout()
             router.route("/login")
+
+    uploaded_file = st.file_uploader("Choose a file")
 
     with st.container():
         query = st.text_input(

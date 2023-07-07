@@ -19,6 +19,9 @@ gunicorn = "^20.1.0"
 fastapi-users = {extras = ["sqlalchemy"], version = "^11.0.0"}
 qdrant-client = {version = "^1.0.4", python = "<3.12"}
 openai = "^0.27.7"
+reportlab = "^4.0.4"
+pdfplumber = "^0.9.0"
+python-docx = "^0.8.11"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
