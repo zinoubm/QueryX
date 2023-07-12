@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.deps.db import get_async_session
-from app.models.user import User as UserModel
+from app.models.user import OAuthAccount, User as UserModel
 
 bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
@@ -38,7 +38,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[UserModel, uuid.UUID]):
 
 
 def get_user_db(session: AsyncSession = Depends(get_async_session)):
-    yield SQLAlchemyUserDatabase(session, UserModel)
+    yield SQLAlchemyUserDatabase(session, UserModel, OAuthAccount)
 
 
 def get_user_manager(user_db=Depends(get_user_db)):

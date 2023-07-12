@@ -10,6 +10,10 @@ from app.api import api_router
 from app.core.config import settings
 from app.deps.users import fastapi_users, jwt_authentication
 from app.schemas.user import UserCreate, UserRead, UserUpdate
+import os
+
+
+from httpx_oauth.clients.google import GoogleOAuth2  # google client
 
 
 def create_app():
@@ -48,6 +52,19 @@ def setup_routers(app: FastAPI, fastapi_users: FastAPIUsers) -> None:
         ),
         prefix=f"{settings.API_PATH}/users",
         tags=["users"],
+    )
+
+    google_oauth_client = GoogleOAuth2(
+        os.getenv("GOOGLE_OAUTH_CLIENT_ID", ""),
+        os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", ""),
+    )
+
+    app.include_router(
+        fastapi_users.get_oauth_router(
+            google_oauth_client, jwt_authentication, "SECRET"
+        ),
+        prefix="/auth/google",
+        tags=["auth"],
     )
     # The following operation needs to be at the end of this function
     use_route_names_as_operation_ids(app)
