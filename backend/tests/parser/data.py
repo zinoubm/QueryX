@@ -7,8 +7,7 @@ from reportlab.platypus import Paragraph
 import docx
 
 
-def dummy_pdf(text: str):
-    temp_file_path = "/tmp/temp_file"
+def dummy_pdf(text: str, temp_file_path="/tmp/temp_file"):
     c = canvas.Canvas(temp_file_path, pagesize=letter)
 
     style = ParagraphStyle(
@@ -50,7 +49,3 @@ def dummy_docx(text: str):
     document.save(temp_file_path)
 
     return temp_file_path
-
-
-if __name__ == "__main__":
-    pass

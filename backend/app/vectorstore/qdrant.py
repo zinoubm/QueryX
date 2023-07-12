@@ -116,20 +116,20 @@ class QdrantManager:
 
         return response
 
-    def search_point(self, query_vector, username, filename, limit):
+    def search_point(self, query_vector, user_id, document_id, limit):
         response = self.client.search(
             collection_name=self.collection_name,
             query_filter=models.Filter(
                 must=[
                     models.FieldCondition(
-                        key="user",
+                        key="user_id",
                         match=models.MatchValue(
-                            value=username,
+                            value=user_id,
                         ),
                     ),
                     models.FieldCondition(
-                        key="filename",
-                        match=models.MatchValue(value=filename),
+                        key="document_id",
+                        match=models.MatchValue(value=document_id),
                     ),
                 ]
             ),

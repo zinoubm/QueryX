@@ -2,7 +2,7 @@ import os
 from fastapi import UploadFile
 import mimetypes
 from app.parser.parsers import *
-from models.models import Document, DocumentMetadata
+from app.schemas.document import Document
 
 
 async def get_document_from_file(file: UploadFile, temp_file_path="/tmp/temp_file"):
@@ -16,16 +16,13 @@ async def get_document_from_file(file: UploadFile, temp_file_path="/tmp/temp_fil
         parsed_text = await extract_text_with_mimetype(temp_file_path, mimetype)
 
     except Exception as e:
-        print(f"Error: {e}")
         os.remove(temp_file_path)
+        raise Exception("Couldn't get document from file")
 
     os.remove(temp_file_path)
 
     return Document(
         text=parsed_text,
-        metadata=DocumentMetadata(
-            file_type=mimetype,
-        ),
     )
 
 
@@ -49,7 +46,3 @@ async def extract_text_with_mimetype(file_path, mimetype):
         parsed_text = DocxParser.parse(file_path)
 
     return parsed_text
-
-
-if __name__ == "__main__":
-    pass

@@ -11,7 +11,7 @@ from sqlalchemy.sql.sqltypes import DateTime
 from app.db import Base
 
 if TYPE_CHECKING:
-    from app.models.user import User  # noqa: F401
+    from app.models.user import User
 
 
 class Document(Base):
@@ -25,8 +25,3 @@ class Document(Base):
     created: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    # updated: Mapped[datetime] = mapped_column(
-    #     DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    # )
-
-    # value: Mapped[str | None]
