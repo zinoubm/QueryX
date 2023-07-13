@@ -12,4 +12,6 @@ if __name__ == "__main__":
         host="0.0.0.0",
         reload=True,
         port=int("8000"),
+        ssl_keyfile="./localhost+2-key.pem",
+        ssl_certfile="./localhost+2.pem",
     )

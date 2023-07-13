@@ -15,6 +15,9 @@ import os
 
 from httpx_oauth.clients.google import GoogleOAuth2  # google client
 
+# for dev only
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
 
 def create_app():
     description = f"{settings.PROJECT_NAME} API"
