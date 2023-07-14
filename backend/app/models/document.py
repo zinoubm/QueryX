@@ -18,7 +18,7 @@ class Document(Base):
     __tablename__ = "document"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("users.id"))
+    user_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("user.id"))
     user: Mapped["User"] = relationship(back_populates="documents")
     name: Mapped[str]
 
