@@ -13,7 +13,10 @@ class TestQuery:
     ):
         user: User = await create_user()
         jwt_header = get_jwt_header(user)
-        payload = {"query": "What is the meaning of life?", "filename": "example.txt"}
+        payload = {
+            "query": "What is the meaning of life?",
+            "document_id": 11,
+        }
         resp = await client.post(
             settings.API_PATH + "/queries/",
             json=payload,

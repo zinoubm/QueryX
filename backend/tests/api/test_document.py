@@ -6,26 +6,26 @@ from tests.utils import get_jwt_header
 from tests.parser.data import dummy_pdf
 
 
-# class TestUpload:
-#     async def test_upload(
-#         self,
-#         client: AsyncClient,
-#         create_user,
-#     ):
-#         user: User = await create_user()
-#         jwt_header = get_jwt_header(user)
+class TestUpload:
+    async def test_upload(
+        self,
+        client: AsyncClient,
+        create_user,
+    ):
+        user: User = await create_user()
+        jwt_header = get_jwt_header(user)
 
-#         pdf_path = dummy_pdf(dummy_text, temp_file_path="/tmp/temp_file_test.pdf")
+        pdf_path = dummy_pdf(dummy_text, temp_file_path="/tmp/temp_file_test.pdf")
 
-#         files = {"file": open(pdf_path, "rb")}
+        files = {"file": open(pdf_path, "rb")}
 
-#         resp = await client.post(
-#             settings.API_PATH + "/documents/upsert-file",
-#             headers=jwt_header,
-#             files=files,
-#         )
+        resp = await client.post(
+            settings.API_PATH + "/documents/upsert-file",
+            headers=jwt_header,
+            files=files,
+        )
 
-#         assert resp.status_code == 200
+        assert resp.status_code == 200
 
 
 class TestGetUserDocuments:

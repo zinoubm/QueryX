@@ -7,11 +7,8 @@ import requests
 from app.deps.users import current_user
 from app.models.user import User
 
-# from app.vectorstore.qdrant import VectorClient
-# from app.schemas.query import Query
-
-from app.vectorstore.qdrant import QdrantManager
-from app.openai.base import OpenAiManager
+from app.vectorstore.qdrant import qdrant_manager
+from app.openai.base import openai_manager
 from app.openai.core import ask, summarize
 
 from pydantic import BaseModel
@@ -19,12 +16,12 @@ from pydantic import BaseModel
 
 class QueryRequest(BaseModel):
     query: str
-    document_id: str
+    document_id: int
 
 
 class QueryResponse(BaseModel):
     answer: str
-    document_id: str
+    document_id: int
 
 
 router = APIRouter(prefix="/queries")
@@ -36,35 +33,25 @@ async def query(
     response: Response,
     user: User = Depends(current_user),
 ) -> QueryResponse:
-    if user:
-        # print("wow")
-        vector_client = QdrantManager()
-        openai_client = OpenAiManager()
-        query_embedding = openai_client.get_embedding(query_request.query)
-        points = vector_client.search_point(
-            query_embedding, user.id, query_request.filename, limit=3
-        )
-        # answer = ask(points, query_request.query, openai_client)
-    else:
-        raise Exception
+    query_vector = openai_manager.get_embedding(query_request.query)
+    print("user_id type: ")
+    print(type(user.id.hex))
+    points = qdrant_manager.search_point(
+        query_vector=query_vector,
+        user_id=user.id.hex,
+        document_id=query_request.document_id,
+        limit=10,
+    )
 
-    # query_response = QueryResponse(answer=answer, filename=query_request.filename)
-    query_response = QueryResponse(answer="wow", filename="wow.pdf")
+    answer = ask(
+        "\n\n\n".join([point.payload["chunk"] for point in points]),
+        query_request.query,
+        openai_manager,
+    )
+
+    print("answer: ->")
+    print(answer)
+
+    query_response = QueryResponse(answer=answer, document_id=query_request.document_id)
 
     return query_response
-
-
-# @router.get("/{query}")
-# async def query(
-#     query: str,
-#     response: Response,
-#     user: User = Depends(current_user),
-# ) -> Any:
-#     if user:
-#         client = VectorClient()
-#         answer = client.answer(query)
-
-#     else:
-#         raise Exception
-
-#     return {"answer": answer}

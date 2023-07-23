@@ -143,3 +143,6 @@ class QdrantManager:
         response = self.client.delete_collection(collection_name=self.collection_name)
 
         return response
+
+
+qdrant_manager = QdrantManager()

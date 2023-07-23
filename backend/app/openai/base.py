@@ -77,3 +77,6 @@ class OpenAiManager:
             print(f"Sorry, There was a problem {err}")
 
         return [embedding["embedding"] for embedding in embeddings]
+
+
+openai_manager = OpenAiManager()
