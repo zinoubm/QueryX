@@ -6,7 +6,29 @@ from tests.utils import get_jwt_header
 from tests.parser.data import dummy_pdf
 
 
-class TestUpload:
+# class TestUpload:
+#     async def test_upload(
+#         self,
+#         client: AsyncClient,
+#         create_user,
+#     ):
+#         user: User = await create_user()
+#         jwt_header = get_jwt_header(user)
+
+#         pdf_path = dummy_pdf(dummy_text, temp_file_path="/tmp/temp_file_test.pdf")
+
+#         files = {"file": open(pdf_path, "rb")}
+
+#         resp = await client.post(
+#             settings.API_PATH + "/documents/upsert-file",
+#             headers=jwt_header,
+#             files=files,
+#         )
+
+#         assert resp.status_code == 200
+
+
+class TestGetUserDocuments:
     async def test_upload(
         self,
         client: AsyncClient,
@@ -25,29 +47,14 @@ class TestUpload:
             files=files,
         )
 
+        docs_resp = await client.get(
+            settings.API_PATH + "/documents/",
+            headers=jwt_header,
+        )
+        print("documents")
+        print(docs_resp.json()["documents"])
         assert resp.status_code == 200
-
-
-# class TestUnsupportedUpload:
-#     async def test_upload(
-#         self,
-#         client: AsyncClient,
-#         create_user,
-#     ):
-#         user: User = await create_user()
-#         jwt_header = get_jwt_header(user)
-
-#         pdf_path = dummy_pdf(dummy_text, temp_file_path="/tmp/temp_file_test")
-
-#         files = {"file": open(pdf_path, "rb")}
-
-#         resp = await client.post(
-#             settings.API_PATH + "/documents/upsert-file",
-#             headers=jwt_header,
-#             files=files,
-#         )
-
-#         assert resp.status_code == 200
+        assert len(docs_resp.json()["documents"]) > 0
 
 
 dummy_text = """

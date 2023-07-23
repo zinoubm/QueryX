@@ -16,6 +16,8 @@ from app.models.document import Document
 from uuid import uuid4
 
 from app.vectorstore.qdrant import QdrantManager
+from app.openai.base import OpenAiManager
+from sqlalchemy.future import select
 
 
 router = APIRouter(prefix="/documents")
@@ -34,40 +36,46 @@ async def upsert_file(
 
     chunks = chunk_text(document.text, max_size=2000)
 
-    embedding = [list(range(1, 1536))]
-
     db_document = Document(user_id=user.id, name=file.filename)
 
     session.add(db_document)
 
     await session.commit()
 
-    document_chunks = []
+    openai_manager = OpenAiManager()
 
-    # for chunk, embedding in zip(chunks, embeddings):
-    for chunk in chunks:
-        document_chunk = {
-            "id": uuid4().hex,
-            "text": chunk,
-            "embedding": embedding,
-        }
+    ids = [uuid4().hex for chunk in chunks]
 
-        document_chunks.append(document_chunk)
-
-    ids = [chunk["id"] for chunk in document_chunks]
-    payloads = [{"chunk": chunk["text"]} for chunk in document_chunks]
-    embeddings = [chunk["embedding"] for chunk in document_chunks]
-    # response = vector_manager.upsert_points(record_ids, record_payloads, record_embeddings)
+    payloads = [
+        {"user_id": user.id, "document_id": db_document.id, "chunk": chunk}
+        for chunk in chunks
+    ]
+    embeddings = openai_manager.get_embeddings(chunks)
     vector_manager = QdrantManager()
     response = vector_manager.upsert_points(ids, payloads, embeddings)
 
-    print(
-        {
-            "file_name": file.filename,
-            "user_id": user.id,
-            # "document": document,
-            "lenght": len(chunks),
-            "chunks": ids,
-        }
-    )
+    # print("response: -->")
+    # print(response)
+    # print(
+    #     {
+    #         "file_name": file.filename,
+    #         "user_id": user.id,
+    #         "document_id": db_document.id,
+    #         "lenght": len(chunks),
+    #         "chunks": ids,
+    #     }
+    # )
     return UpsertResponse(id=db_document.id)
+
+
+@router.get("/")
+async def get_documents(
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_user),
+):
+    statement = select(Document).where(Document.user_id == user.id)
+    db_documents = await session.execute(statement)
+    documents = [document.name for document in db_documents.scalars().all()]
+    # print("document in endpoint")
+    # print({"documents": documents})
+    return {"documents": documents}

@@ -17,7 +17,7 @@ QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
 class QdrantManager:
     """
-    A class for managing collections in the Qdrant database.
+    A class for managing collectionsget_collection_info in the Qdrant database.
 
     Args:
         collection_name (str): The name of the collection to manage.

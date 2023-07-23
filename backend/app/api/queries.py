@@ -19,12 +19,12 @@ from pydantic import BaseModel
 
 class QueryRequest(BaseModel):
     query: str
-    filename: str
+    document_id: str
 
 
 class QueryResponse(BaseModel):
-    answer: Any
-    filename: str
+    answer: str
+    document_id: str
 
 
 router = APIRouter(prefix="/queries")
