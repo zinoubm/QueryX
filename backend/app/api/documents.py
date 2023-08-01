@@ -32,11 +32,13 @@ async def upsert_file(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_user),
 ):
+    print("upload initiated")
     document = await get_document_from_file(file)
 
     chunks = chunk_text(document.text, max_size=2000)
-
-    db_document = Document(user_id=user.id, name=file.filename)
+    print("user id from documents endpoint")
+    print(str(user.id).replace("-", ""))
+    db_document = Document(user_id=str(user.id).replace("-", ""), name=file.filename)
 
     session.add(db_document)
 
@@ -47,24 +49,17 @@ async def upsert_file(
     ids = [uuid4().hex for chunk in chunks]
 
     payloads = [
-        {"user_id": user.id, "document_id": db_document.id, "chunk": chunk}
+        {
+            "user_id": str(user.id).replace("-", ""),
+            "document_id": db_document.id,
+            "chunk": chunk,
+        }
         for chunk in chunks
     ]
     embeddings = openai_manager.get_embeddings(chunks)
     vector_manager = QdrantManager()
     response = vector_manager.upsert_points(ids, payloads, embeddings)
 
-    # print("response: -->")
-    # print(response)
-    # print(
-    #     {
-    #         "file_name": file.filename,
-    #         "user_id": user.id,
-    #         "document_id": db_document.id,
-    #         "lenght": len(chunks),
-    #         "chunks": ids,
-    #     }
-    # )
     return UpsertResponse(id=db_document.id)
 
 
@@ -73,9 +68,12 @@ async def get_documents(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_user),
 ):
-    statement = select(Document).where(Document.user_id == user.id)
+    statement = select(Document).where(
+        Document.user_id == str(user.id).replace("-", "")
+    )
     db_documents = await session.execute(statement)
-    documents = [document.name for document in db_documents.scalars().all()]
-    # print("document in endpoint")
-    # print({"documents": documents})
+    documents = [
+        {"id": document.id, "name": document.name}
+        for document in db_documents.scalars().all()
+    ]
     return {"documents": documents}

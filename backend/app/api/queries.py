@@ -9,7 +9,7 @@ from app.models.user import User
 
 from app.vectorstore.qdrant import qdrant_manager
 from app.openai.base import openai_manager
-from app.openai.core import ask, summarize
+from app.openai.core import ask, filter, summarize
 
 from pydantic import BaseModel
 
@@ -33,25 +33,58 @@ async def query(
     response: Response,
     user: User = Depends(current_user),
 ) -> QueryResponse:
+    # add check that this user actually owns this document
+
     query_vector = openai_manager.get_embedding(query_request.query)
-    print("user_id type: ")
-    print(type(user.id.hex))
+
+    print(">>>>>>>>>>>>")
+    print("query vector")
+    print(query_vector)
+
+    print(">>>>>>>>>>>>>>>")
+    print("document_id: ", query_request.document_id)
+    print("--------------")
+
+    print(">>>>>>>>>>>>")
+    print("user_id")
+    print(user.id.hex)
+
     points = qdrant_manager.search_point(
         query_vector=query_vector,
-        user_id=user.id.hex,
-        document_id=query_request.document_id,
-        limit=10,
+        user_id=str(user.id.hex),
+        document_id=int(query_request.document_id),
+        limit=1000,
     )
 
-    answer = ask(
-        "\n\n\n".join([point.payload["chunk"] for point in points]),
-        query_request.query,
-        openai_manager,
-    )
+    print(">>>>>>>>>>>>")
+    print("points")
+    print(points)
 
-    print("answer: ->")
-    print(answer)
+    context = "\n\n\n".join([point.payload["chunk"] for point in points])
+    print(">>>>>>>>>>>>")
+    print("context")
+    print(context)
 
-    query_response = QueryResponse(answer=answer, document_id=query_request.document_id)
+    filter_response = filter(context, query_request.query, openai_manager)
+    print(">>>>>>>>>>>>>>>>")
+    print("filter resopnse")
+    print(filter_response)
+    print("----------------")
+    if filter_response:
+        answer = ask(
+            context,
+            query_request.query,
+            openai_manager,
+        )
+
+        query_response = QueryResponse(
+            answer=answer, document_id=query_request.document_id
+        )
+
+    else:
+        query_response = QueryResponse(
+            answer="Sorry, Your question is out of Context!",
+            document_id=query_request.document_id,
+        )
 
     return query_response

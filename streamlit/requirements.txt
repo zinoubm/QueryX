@@ -5,3 +5,4 @@ streamlit-extras
 extra-streamlit-components
 hugchat
 requests
+httpx

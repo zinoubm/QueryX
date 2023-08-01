@@ -87,6 +87,10 @@ docker-compose exec backend alembic revision --autogenerate -m 'message'
 
 # Apply latest changes
 docker-compose exec backend alembic upgrade head
+
+# Access Database
+docker exec -it queryx-postgres-1 psql -U postgres -d app
+
 ```
 
 ### Backend tests

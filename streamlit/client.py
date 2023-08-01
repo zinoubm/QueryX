@@ -1,9 +1,16 @@
-# import extra_streamlit_components as stx
 import requests
-from datetime import datetime, timedelta
-from exeptions import UnauthorizedException
+from exeptions import (
+    UnauthorizedException,
+    RegistrationErrorException,
+    LogoutErrorException,
+    DocumentUploadErrorException,
+    GetDocumentsErrorException,
+    QueryErrorException,
+)
 import extra_streamlit_components as stx
 import json
+import httpx
+import logging
 
 
 class HttpClient:
@@ -21,18 +28,14 @@ class HttpClient:
 
     def register(self, email: str, password: str):
         url = self.backend_base_url + "/auth/register"
-
         payload = {"email": email, "password": password}
-
         headers = {"Content-Type": "application/json"}
-
         response = requests.post(url, data=json.dumps(payload), headers=headers)
 
-        token = response.json()
+        if response.status_code != 200:
+            raise RegistrationErrorException
 
-        print(token)
-        print("status")
-        print(response.status_code)
+        token = response.json()
 
     def login(self, username, password):
         url = self.backend_base_url + "/auth/jwt/login"
@@ -53,11 +56,7 @@ class HttpClient:
     @request
     def logout(self):
         url = self.backend_base_url + "/auth/jwt/logout"
-
-        print("bearer token")
         token = self.get_credentials()
-        print(token)
-
         headers = {
             "Authorization": f"Bearer {token}",
         }
@@ -66,6 +65,9 @@ class HttpClient:
             url,
             headers=headers,
         )
+
+        if response.status_code != 200:
+            raise LogoutErrorException("There was a problem with the login")
 
         self.delete_credentials()
 
@@ -93,22 +95,58 @@ class HttpClient:
 
             raise UnauthorizedException("Expired or Incorrect Credentials")
 
-    def get_query(self, query):
-        # self.check_status()
-        url = self.backend_base_url + "/queries/" + query
-        creds = self.get_credentials()
+    def upload_document(self, document):
+        url = self.backend_base_url + "/documents/upsert-file"
+        files = {"file": (document.name, document.read())}
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+        }
 
+        response = httpx.post(url, headers=headers, files=files, timeout=30)
+
+        if response.status_code != 200:
+            raise DocumentUploadErrorException
+
+        # resp = requests.post(url, headers=headers, files=files)
+
+    def get_documents(self):
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+        }
+
+        response = httpx.get(
+            self.backend_base_url + "/documents/",
+            headers=headers,
+        )
+
+        if response.status_code != 200:
+            raise GetDocumentsErrorException
+
+        return response.json()["documents"]
+
+    def get_query(self, query, document_id):
+        url = self.backend_base_url + "/queries/"
+        creds = self.get_credentials()
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {creds}",
         }
-        response = requests.get(url, headers=headers)
+        payload = {
+            "query": query,
+            "document_id": document_id,
+        }
 
-        if response.status_code == 200:
-            data = response.json()
-            return data["answer"]
+        response = requests.post(
+            url,
+            headers=headers,
+            json=payload,
+        )
 
-        raise UnauthorizedException
+        if response.status_code != 200:
+            raise QueryErrorException
+
+        data = response.json()
+        return data["answer"]
 
     def set_credentials(self, creds):
         self.token = creds
@@ -133,34 +171,3 @@ class HttpClient:
 
 
 client = HttpClient()
-
-if __name__ == "__main__":
-    email = "zanzan.arthur@camelot.bt"
-    password = "gui23nevere"
-
-    # client = HttpClient()
-    # client.register(email, password)
-
-    # login
-    try:
-        client.login(username=email, password=password)
-
-    except UnauthorizedException as e:
-        print("route to login")
-
-    # get_credentials
-    # print("credentials from client")
-    # print(client.get_credentials())
-
-    # check_status
-    print("checking the status")
-    try:
-        client.check_status()
-
-    except UnauthorizedException as e:
-        print("route to login")
-
-    client.get_query("What is twitter")
-
-    # logout
-    client.logout()
