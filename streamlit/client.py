@@ -85,12 +85,11 @@ class HttpClient:
             }
 
             response = requests.get(url, headers=headers)
-            response_content = response.json()
 
             if response.status_code == 200:
                 return {
                     "authentication_status": True,
-                    "username": response_content["email"],
+                    "username": response.json()["email"],
                 }
 
             raise UnauthorizedException("Expired or Incorrect Credentials")
