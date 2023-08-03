@@ -10,6 +10,7 @@ ENV PYTHONUNBUFFERED=1
 
 # mount env file
 # RUN --mount=type=secret,id=_env,dst=/etc/secrets/.env cat /etc/secrets/.env
+RUN --mount=type=secret,id=_env,dst=/etc/secrets/.env --env-file /etc/secrets/.env
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python && \
@@ -31,4 +32,4 @@ COPY --from=base /app /app
 COPY --from=base /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 COPY --from=base /usr/local/bin /usr/local/bin
 
-CMD --mount=type=secret,id=_env,dst=/etc/secrets/.env uvicorn --host 0.0.0.0 --port 8000 main:app
+CMD uvicorn --host 0.0.0.0 --port 8000 main:app
