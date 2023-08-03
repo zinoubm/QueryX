@@ -37,17 +37,17 @@ async def query(
 
     query_vector = openai_manager.get_embedding(query_request.query)
 
-    print(">>>>>>>>>>>>")
-    print("query vector")
-    print(query_vector)
+    # print(">>>>>>>>>>>>")
+    # print("query vector")
+    # print(query_vector)
 
-    print(">>>>>>>>>>>>>>>")
-    print("document_id: ", query_request.document_id)
-    print("--------------")
+    # print(">>>>>>>>>>>>>>>")
+    # print("document_id: ", query_request.document_id)
+    # print("--------------")
 
-    print(">>>>>>>>>>>>")
-    print("user_id")
-    print(user.id.hex)
+    # print(">>>>>>>>>>>>")
+    # print("user_id")
+    # print(user.id.hex)
 
     points = qdrant_manager.search_point(
         query_vector=query_vector,
@@ -56,20 +56,22 @@ async def query(
         limit=1000,
     )
 
-    print(">>>>>>>>>>>>")
-    print("points")
-    print(points)
+    # print(">>>>>>>>>>>>")
+    # print("points")
+    # print(points)
 
     context = "\n\n\n".join([point.payload["chunk"] for point in points])
-    print(">>>>>>>>>>>>")
-    print("context")
-    print(context)
+    # print(">>>>>>>>>>>>")
+    # print("context")
+    # print(context)
 
-    filter_response = filter(context, query_request.query, openai_manager)
-    print(">>>>>>>>>>>>>>>>")
-    print("filter resopnse")
-    print(filter_response)
-    print("----------------")
+    # filter_response = filter(context, query_request.query, openai_manager)
+    # print(">>>>>>>>>>>>>>>>")
+    # print("filter resopnse")
+    # print(filter_response)
+    # print("----------------")
+    # remove later
+    filter_response = True
     if filter_response:
         answer = ask(
             context,

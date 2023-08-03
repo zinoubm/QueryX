@@ -11,13 +11,16 @@ import extra_streamlit_components as stx
 import json
 import httpx
 import logging
+import os
+
+BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL")
 
 
 class HttpClient:
     def __init__(self) -> None:
         self.cookie_manager = stx.CookieManager()
         self.token = None
-        self.backend_base_url = "http://backend:8000/api/v1"
+        self.backend_base_url = BACKEND_BASE_URL + "/api/v1"
 
     def request(func):
         def inner(self):
@@ -32,7 +35,7 @@ class HttpClient:
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, data=json.dumps(payload), headers=headers)
 
-        if response.status_code != 200:
+        if response.status_code != 201:
             raise RegistrationErrorException
 
         token = response.json()
@@ -40,7 +43,6 @@ class HttpClient:
     def login(self, username, password):
         url = self.backend_base_url + "/auth/jwt/login"
         data = {"username": username, "password": password}
-
         response = requests.post(
             url,
             data=data,
@@ -50,7 +52,6 @@ class HttpClient:
             raise UnauthorizedException("There was a problem with the login")
 
         token = response.json()["access_token"]
-
         self.set_credentials(token)
 
     @request
@@ -60,7 +61,6 @@ class HttpClient:
         headers = {
             "Authorization": f"Bearer {token}",
         }
-
         response = requests.post(
             url,
             headers=headers,
@@ -106,8 +106,6 @@ class HttpClient:
 
         if response.status_code != 200:
             raise DocumentUploadErrorException
-
-        # resp = requests.post(url, headers=headers, files=files)
 
     def get_documents(self):
         headers = {

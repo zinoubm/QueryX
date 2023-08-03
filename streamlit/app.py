@@ -13,7 +13,10 @@ from exeptions import (
     QueryErrorException,
 )
 
-# st.set_page_config(page_title="QueryX")
+try:
+    st.set_page_config(page_title="OpenPdf")
+except Exception as e:
+    print("Initializing The Client!")
 
 
 @st.cache_data
@@ -21,21 +24,6 @@ def init_router():
     return stx.Router({"/login": login, "/signup": signup, "/": app})
 
 
-# state initialization
-# if "email" not in st.session_state:
-#     st.session_state["email"] = None
-
-# if "password" not in st.session_state:
-#     st.session_state["password"] = None
-
-# if "token" not in st.session_state:
-#     st.session_state["token"] = None
-
-# if "authentication_status" not in st.session_state:
-#     st.session_state["authentication_status"] = False
-
-
-#######
 if "history" not in st.session_state:
     st.session_state["history"] = []
 if "document_id" not in st.session_state:
@@ -44,7 +32,8 @@ if "document_id" not in st.session_state:
 
 def login():
     with st.container():
-        email = st.text_input("email", key="login_email")
+        st.title("Login")
+        email = st.text_input("Email", key="login_email")
         password = st.text_input("Password", key="login_password")
         if st.button("Login"):
             try:
@@ -60,7 +49,8 @@ def login():
 
 def signup():
     with st.container():
-        email = st.text_input("email", key="signup_email")
+        st.title("Signup")
+        email = st.text_input("Email", key="signup_email")
         password = st.text_input("Password", key="signup_password")
         if st.button("Sign Up"):
             try:
@@ -75,8 +65,6 @@ def signup():
 
 
 def app():
-    # st.set_page_config(page_title="QueryX")
-
     try:
         client.check_status()
     except UnauthorizedException:
@@ -84,6 +72,7 @@ def app():
         st.warning("Your Sessiong Expired, Please LogIn!")
 
     with st.sidebar:
+        st.title("OpenPdf")
         try:
             documents = client.get_documents()
             documents_names = [document["name"] for document in documents]
@@ -108,6 +97,7 @@ def app():
     if st.button("Upload") and uploaded_file:
         try:
             client.upload_document(uploaded_file)
+            st.info("Document Uploaded Successfuly, Please Refresh The Page :)")
         except DocumentUploadErrorException:
             st.warning("Couldn't Upload Document, Please Refresh And Try Again!")
 

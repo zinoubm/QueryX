@@ -1,7 +1,7 @@
 def ask(context, question, manager):
     prompt = f"""
-    Use the context to write a detailed answer to the following question. If the context doesn't contain the answer, Do Not Answer!
-    If the context doesn't mention anything about the qustion Please Do Not Answer!
+    Answer the following question according to the provided context. If the context doesn't contain the answer, Do Not Answer!
+    If the context doesn't mention anything about the qustion Please Say the The Question Is Out Of Context!
 
     context: {context}
 
@@ -21,9 +21,7 @@ def filter(context, question, manager):
     answer:
     """
     filter_response = manager.get_chat_completion(prompt).strip()
-    print(">>>>>>>>>>>>>>>>")
-    print("completion")
-    print(filter_response)
+
     return (
         (filter_response == "YES")
         or (filter_response == "Yes")

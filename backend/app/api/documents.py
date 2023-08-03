@@ -32,22 +32,15 @@ async def upsert_file(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_user),
 ):
-    print("upload initiated")
     document = await get_document_from_file(file)
-
     chunks = chunk_text(document.text, max_size=2000)
-    print("user id from documents endpoint")
-    print(str(user.id).replace("-", ""))
     db_document = Document(user_id=str(user.id).replace("-", ""), name=file.filename)
-
     session.add(db_document)
 
     await session.commit()
 
     openai_manager = OpenAiManager()
-
     ids = [uuid4().hex for chunk in chunks]
-
     payloads = [
         {
             "user_id": str(user.id).replace("-", ""),
@@ -57,6 +50,7 @@ async def upsert_file(
         for chunk in chunks
     ]
     embeddings = openai_manager.get_embeddings(chunks)
+
     vector_manager = QdrantManager()
     response = vector_manager.upsert_points(ids, payloads, embeddings)
 
@@ -72,8 +66,10 @@ async def get_documents(
         Document.user_id == str(user.id).replace("-", "")
     )
     db_documents = await session.execute(statement)
+
     documents = [
         {"id": document.id, "name": document.name}
         for document in db_documents.scalars().all()
     ]
+
     return {"documents": documents}

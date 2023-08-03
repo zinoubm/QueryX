@@ -3,6 +3,8 @@ version: "3.9"
 services:
   postgres:
     image: postgres:12
+    ports:
+      - "5432:5432"
     restart: always
     env_file:
       - .env
@@ -11,6 +13,8 @@ services:
       interval: 3s
       timeout: 2s
       retries: 3
+    volumes:
+      - app-db-data:/var/lib/postgresql/data:cached
 
   backend:
     build:
@@ -22,13 +26,22 @@ services:
       postgres:
         condition: service_healthy
 
+    command: uvicorn --port 8000 --host 0.0.0.0 --reload main:app
+
+    volumes:
+      - ./backend:/app:delegated
+      - root-home:/root:delegated
+
   streamlit:
     build:
       context: ./streamlit
+    env_file: .env
     volumes:
       - ./streamlit:/code
     ports:
       - "9000:9000"
+    depends_on:
+      - backend
 
 volumes:
   app-db-data:
