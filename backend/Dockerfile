@@ -1,3 +1,5 @@
+# syntax = docker/dockerfile:1.2
+
 ARG PYTHON_VER=3.10
 
 FROM python:${PYTHON_VER} AS base
@@ -5,6 +7,9 @@ FROM python:${PYTHON_VER} AS base
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
+
+# mount env file
+RUN --mount=type=secret,id=_env,dst=/etc/secrets/.env cat /etc/secrets/.env
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python && \
