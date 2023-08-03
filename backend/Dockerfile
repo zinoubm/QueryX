@@ -8,10 +8,6 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
 
-# mount env file
-# RUN --mount=type=secret,id=_env,dst=/etc/secrets/.env cat /etc/secrets/.env
-RUN --mount=type=secret,id=_env,dst=/etc/secrets/.env --env-file /etc/secrets/.env
-
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python && \
     cd /usr/local/bin && \
