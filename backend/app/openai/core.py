@@ -2,6 +2,7 @@ def ask(context, question, manager):
     prompt = f"""
     Answer the following question according to the provided context. If the context doesn't contain the answer, Do Not Answer!
     If the context doesn't mention anything about the qustion Please Say the The Question Is Out Of Context!
+    If the context Is empty, Please Say No Context!
 
     context: {context}
 

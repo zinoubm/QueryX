@@ -3,7 +3,7 @@ from streamlit_chat import message
 from streamlit_extras.colored_header import colored_header
 from streamlit_extras.add_vertical_space import add_vertical_space
 import extra_streamlit_components as stx
-from client import client
+from client import HttpClient
 from exeptions import (
     UnauthorizedException,
     RegistrationErrorException,
@@ -24,10 +24,21 @@ def init_router():
     return stx.Router({"/login": login, "/signup": signup, "/": app})
 
 
+if "username" not in st.session_state:
+    st.session_state["username"] = None
 if "history" not in st.session_state:
     st.session_state["history"] = []
 if "document_id" not in st.session_state:
     st.session_state["document_id"] = None
+if "token" not in st.session_state:
+    st.session_state["token"] = None
+if "documents_names" not in st.session_state:
+    st.session_state["documents_names"] = None
+if "names_to_ids" not in st.session_state:
+    st.session_state["names_to_ids"] = None
+
+
+client = HttpClient(st.session_state)
 
 
 def login():
@@ -64,28 +75,38 @@ def signup():
             router.route("/login")
 
 
+def update_documents():
+    documents = client.get_documents()
+    documents_names = [document["name"] for document in documents]
+    names_to_ids = {document["name"]: document["id"] for document in documents}
+    st.session_state["documents_names"] = documents_names
+    st.session_state["names_to_ids"] = names_to_ids
+
+
 def app():
     try:
-        client.check_status()
+        user = client.check_status()
+        st.session_state["username"] = user["username"]
     except UnauthorizedException:
         router.route("/login")
         st.warning("Your Sessiong Expired, Please LogIn!")
 
     with st.sidebar:
         st.title("OpenPdf")
+        st.write("Hi " + st.session_state["username"])
         try:
-            documents = client.get_documents()
-            documents_names = [document["name"] for document in documents]
-            names_to_ids = {document["name"]: document["id"] for document in documents}
+            update_documents()
+            option = st.selectbox(
+                "Please, Select a Document.",
+                st.session_state["documents_names"],
+            )
+
         except GetDocumentsErrorException:
+            option = None
             st.warning("Couldn't Get Documents, Please Refresh And Try Again!")
 
-        option = st.selectbox(
-            "Please, Select a Document.",
-            documents_names,
-        )
         if option:
-            st.session_state["document_id"] = names_to_ids[option]
+            st.session_state["document_id"] = st.session_state["names_to_ids"][option]
 
         if st.button("Log out"):
             try:
@@ -97,7 +118,8 @@ def app():
     if st.button("Upload") and uploaded_file:
         try:
             client.upload_document(uploaded_file)
-            st.info("Document Uploaded Successfuly, Please Refresh The Page :)")
+            st.info("Document Uploaded Successfuly :)")
+            update_documents()
         except DocumentUploadErrorException:
             st.warning("Couldn't Upload Document, Please Refresh And Try Again!")
 
